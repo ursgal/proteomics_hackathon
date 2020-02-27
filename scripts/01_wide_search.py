@@ -28,7 +28,6 @@ def remove_outliers(data, m=8):
 def fit_gaussian(data, file):
     data_fil = remove_outliers(data)
     is_normal, p = normal_check(data_fil)
-    is_normal = True
     if is_normal:
         print(f'Normal distributed with p-value: {p}')
     else:
