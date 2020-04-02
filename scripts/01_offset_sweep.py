@@ -79,7 +79,8 @@ def main(files, database, force):
     all_matrices = []
     csv_lines= []
     for file in files:
-q
+        if ('_01.mzML' in file) or ('_47.mzML' in file):# or ('_11.mzML' in file) or ('_19.mzML' in file):
+            continue
         uc.params['machine_offset_in_ppm'] = 0
         uc.params['prefix'] = ''
         uc.params['precursor_mass_tolerance_unit'] = 'ppm'
@@ -104,16 +105,13 @@ q
         uc.params['prefix'] = 'corrected_mgf'
         uc.params['machine_offset_in_ppm'] = machine_offset
         corrected_mgf = uc.convert_to_mgf_and_update_rt_lookup(file, force=force)
-
         csv_lines.append(
             {
                 'File name': os.path.basename(file),
                 'Optimum Precursor offset': machine_offset,
+
             }
         )
-
-        max_res = 0
-        max_param = None
         for prec_tol in precursor_tolerances:
             uc.params['precursor_mass_tolerance_plus'] = prec_tol
             uc.params['precursor_mass_tolerance_minus'] = prec_tol
@@ -131,15 +129,12 @@ q
                 # except:
                     # results = []
                 tolerance_dict[(prec_tol, frag_tol)] = len(results)
-                if len(results) > max_res:
-                    max_res = len(results)
-                    max_param = (prec_tol, frag_tol)
                 file_basename = os.path.splitext(os.path.basename(file))[0]
                 plot_name = f'{file_basename}_{engine}_heatmap.png'
+
         print(tolerance_dict)
         z = draw_heatmap(plot_name, precursor_tolerances, frag_tolerances, tol_dict=tolerance_dict)
         all_matrices.append(z)
-
     field_names = [
         'File name',
         'Optimum Precursor offset',
