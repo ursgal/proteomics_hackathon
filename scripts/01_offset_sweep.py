@@ -79,8 +79,7 @@ def main(files, database, force):
     all_matrices = []
     csv_lines= []
     for file in files:
-        # if ('_01.mzML' in file) or ('_47.mzML' in file):# or ('_11.mzML' in file) or ('_19.mzML' in file):
-        #     continue
+q
         uc.params['machine_offset_in_ppm'] = 0
         uc.params['prefix'] = ''
         uc.params['precursor_mass_tolerance_unit'] = 'ppm'
@@ -106,6 +105,13 @@ def main(files, database, force):
         uc.params['machine_offset_in_ppm'] = machine_offset
         corrected_mgf = uc.convert_to_mgf_and_update_rt_lookup(file, force=force)
 
+        csv_lines.append(
+            {
+                'File name': os.path.basename(file),
+                'Optimum Precursor offset': machine_offset,
+            }
+        )
+
         max_res = 0
         max_param = None
         for prec_tol in precursor_tolerances:
@@ -130,24 +136,13 @@ def main(files, database, force):
                     max_param = (prec_tol, frag_tol)
                 file_basename = os.path.splitext(os.path.basename(file))[0]
                 plot_name = f'{file_basename}_{engine}_heatmap.png'
-        csv_lines.append(
-            {
-                'File name': os.path.basename(file),
-                'Optimum Precursor offset': max_param[0],
-                'Optimum Precursor unit': uc.params['precursor_mass_tolerance_unit'],
-                'Optimal Fragment offset': max_param[1],
-                'Optimal Fragment unit': uc.params['frag_mass_tolerance_unit'],
-            }
-        )
         print(tolerance_dict)
         z = draw_heatmap(plot_name, precursor_tolerances, frag_tolerances, tol_dict=tolerance_dict)
         all_matrices.append(z)
+
     field_names = [
         'File name',
         'Optimum Precursor offset',
-        'Optimum Precursor unit',
-        'Optimal Fragment offset',
-        'Optimal Fragment unit',
     ]
     with open('tolerances.csv', 'wt') as fout:
         writer = csv.DictWriter(fout, fieldnames=field_names)
