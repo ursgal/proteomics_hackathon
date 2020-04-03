@@ -6,9 +6,16 @@ import sys
 import glob
 from collections import defaultdict as ddict
 import csv
+import click
 
 
-def main(folder=None, database=None, offset_file=None, approach="prot_db"):
+@click.command()
+@click.argument("folder")
+@click.argument("database")
+@click.argument("offset_file")
+@click.argument("folder")
+@click.option("approach", default="prot_db")
+def main(folder, database, offset_file, approach="prot_db"):
     mzML_files = []
     for mzml in glob.glob(os.path.join(folder, "*.mzML")):
         mzML_files.append(mzml)
@@ -49,9 +56,9 @@ def main(folder=None, database=None, offset_file=None, approach="prot_db"):
         uc.params["machine_offset_in_ppm"] = offset_dict[mzml]
         if approach == "prot_db":
             for prot_db_engine in [
-                'msgfplus_v2019_07_03',
-                'msfragger_2_3',
-                'mascot_2_6_0',
+                # 'msgfplus_v2019_07_03',
+                # 'msfragger_2_3',
+                # 'mascot_2_6_0',
                 "xtandem_alanine",
                 "omssa_2_1_9",
                 "msamanda_2_0_0_13723",
@@ -68,10 +75,10 @@ def main(folder=None, database=None, offset_file=None, approach="prot_db"):
         if approach == "de_novo":
             de_novo_results = []
             for de_novo_engine in [
-                'pnovo_3_1_3',
-                'novor_1_05',
+                # 'pnovo_3_1_3',
+                # 'novor_1_05',
                 # Do deepnovo
-                'deepnovo_0_0_1'
+                # 'deepnovo_0_0_1'
             ]:
                 unified_search_results = uc.search(file, engine=de_novo_engine)
                 de_novo_results.append(unified_search_results)
