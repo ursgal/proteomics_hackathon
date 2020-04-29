@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 import pathlib
-
+import sys
 import ursgal
 
 
@@ -21,7 +21,7 @@ def main(mzml_folder, merged_result):
         "use_shared_peptides": False,
         "random_seed": 200,
     }
-    uc = ursgal.UController(verbose=False, params=params, profile="QExactive+",)
+    uc = ursgal.UController(verbose=True, params=params, profile="QExactive+",)
 
     healthy_patient_files = [
         "TN_CSF_062617_02.mzML",
@@ -54,6 +54,7 @@ def main(mzml_folder, merged_result):
         "TN_CSF_062617_57.mzML",
     ]
     als_patient_files = [
+        "TN_CSF_062617_03.mzML",
         "TN_CSF_062617_04.mzML",
         "TN_CSF_062617_06.mzML",
         "TN_CSF_062617_07.mzML",
@@ -90,35 +91,43 @@ def main(mzml_folder, merged_result):
     experiment_setup = {}
     i = 0
     mzml_files = []
-    mzml_dir = pathlib.Path(mzml_dir)
-    for i, file in healthy_patient_files:
+    mzml_dir = pathlib.Path(mzml_folder)
+    for file in healthy_patient_files:
         i += 1
         mzml_path = pathlib.Path(file)
-        experiment_setup[i] = {
+        experiment_setup[str(i)] = {
             "FileName": mzml_path.stem,
             "Condition": "H",
             "Biorep": i,
             "Fraction": 1,
             "Techrep": 1,
         }
-        mzml_files.append(mzml_dir / mzml_path)
+        mzml_files.append(str(mzml_dir / mzml_path))
     j = 0
-    for i, file in als_patient_files:
+    for file in als_patient_files:
         i += 1
         j += 1
         mzml_path = pathlib.Path(file)
-        experiment_setup[i] = {
+        experiment_setup[str(i)] = {
             "FileName": mzml_path.stem,
             "Condition": "A",
             "Biorep": j,
             "Fraction": 1,
             "Techrep": 1,
         }
-        mzml_files.append(mzml_dir / mzml_path)
+        mzml_files.append(str(mzml_dir / mzml_path))
     uc.params["experiment_setup"] = experiment_setup
     uc.params["quantification_evidences"] = merged_result
-    quantified_peaks = uc.quantify(files=mzml_files, multi=True,)
+    quantified_peaks = uc.quantify(
+        input_file=mzml_files,
+        multi=True,
+        engine='flash_lfq_1_1_1'
+    )
 
 
 if __name__ == "__main__":
+    main(
+        sys.argv[1],
+        sys.argv[2],
+    )
     pass

@@ -4,22 +4,22 @@ import ursgal
 import sys
 import glob
 import os
+import csv
 
 
-def main(folder=None, profile=None, target_decoy_database=None):
-
+def main(folder=None, target_decoy_database=None, offset_file=None):
     mzML_files = []
     for mzml in glob.glob(os.path.join('{0}'.format(folder), '*.mzML')):
         mzML_files.append(mzml)
 
-    mass_spectrometer = profile
+    mass_spectrometer = 'QExactive+'
 
     # We specify all search engines and validation engines that we want to use in a list
     # (version numbers might differ on windows or mac):
     search_engines = [
         'msfragger_2_3',
-        'moda_v1_62',
-        # 'pipi_1_4_5',
+        'moda_v1_61',
+        'pipi_1_4_6',
     ]
 
     validation_engines = [
@@ -30,6 +30,7 @@ def main(folder=None, profile=None, target_decoy_database=None):
     # our specified mass spectrometer
 
     params = {
+        "use_pyqms_for_mz_calculation": True,
         'database': target_decoy_database,
         'modifications' : ['C,fix,any,Carbamidomethyl'],
         'csv_filter_rules': [
@@ -56,6 +57,12 @@ def main(folder=None, profile=None, target_decoy_database=None):
         params=params,
     )
 
+    offset_dict = {}
+    with open(offset_file, "r") as offset_input:
+        csv_reader = csv.DictReader(offset_input)
+        for line_dict in csv_reader:
+            offset_dict[line_dict["File name"]] = float(line_dict["Optimum Precursor offset"])
+
     # complete workflow:
     # every spectrum file is searched with every search engine,
     # results are validated and filtrated for targets and PEP <= 0.01 (for each engine seperately).
@@ -64,22 +71,26 @@ def main(folder=None, profile=None, target_decoy_database=None):
         all_engines_results = []
         for search_engine in search_engines :
             result_all_files_each_engine = []
-            for spec_file in mzML_files:
-
+            for spec_file in sorted(mzML_files)[:]:
+                if 'TN_CSF_062617_01.mzML' in spec_file:
+                    continue
+                mzml_basename = os.path.basename(spec_file)
+                uc.params['machine_offset_in_ppm'] = offset_dict[mzml_basename]
                 #1. convert to MGF
                 mgf_file = uc.convert(
                     input_file=spec_file,
                     engine = 'mzml2mgf_2_0_0',
+                    # force =True,
                     )
-
+                # continue
                 if search_engine == 'msfragger_2_3':
                     uc.params.update(
                         {'precursor_mass_tolerance_unit' : 'da',
                         'precursor_mass_tolerance_plus' : 2000,
-                        'precursor_mass_tolerance_minus' : -230}
+                        'precursor_mass_tolerance_minus' : 230}
                     )
-                if search_engine == 'pipi_1_4_5':
-                    uc.params.update({'database':target_decoy_database,})
+                # if search_engine == 'pipi_1_4_5':
+                #     uc.params.update({'database':target_decoy_database,})
 
                 #2. do the actual search
                 raw_search_results=uc.search_mgf(
@@ -89,7 +100,7 @@ def main(folder=None, profile=None, target_decoy_database=None):
 
                 uc.params.update(
                     {
-                        'database': original_target_decoy_database,
+                        'database': target_decoy_database,
                         'precursor_mass_tolerance_unit': 'ppm',
                         'precursor_mass_tolerance_plus': 5,
                         'precursor_mass_tolerance_minus': 5
@@ -152,6 +163,6 @@ if __name__ == '__main__':
         sys.exit(1)
     main(
         folder=sys.argv[1],
-        profile=sys.argv[2],
-        target_decoy_database=sys.argv[3],
+        target_decoy_database=sys.argv[2],
+        offset_file=sys.argv[3],
     )
