@@ -7,7 +7,7 @@ import matplotlib.pyplot as plt
 def main(all_merged):
 
     with open(all_merged) as fin:
-        counter = {}
+        mod_dict = {}
         reader = csv.DictReader(fin)
         seen_seq_spec = set()
         for i, line in enumerate(reader):
@@ -24,9 +24,13 @@ def main(all_merged):
                 seen_seq_spec.add(seq_spec)
                 for m in mods:
                     m = m.strip()
-                    if m not in counter.keys():
-                        counter[m] = set()
-                    counter[m].add(line['Sequence'])
+                    if m not in mod_dict.keys():
+                        mod_dict[m] = set()
+                    mod_dict[m].add(line['Sequence'])
+
+    counter = Counter()
+    for m in mod_dict.keys():
+        counter[m] += len(mod_dict[m])
     names, counts = zip(*counter.most_common(50))
     # plt.tight_layout()
     plt.gcf().subplots_adjust(bottom=0.20)
