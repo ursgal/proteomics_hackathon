@@ -14,6 +14,9 @@ def main(all_merged):
             #     break
             if line['Mass Difference'] == '':
                 continue
+            if len(line['Mass Difference'].split(':'))>1:
+                if line['Mass Difference'].split(':')[1] == 'n':
+                    continue
             md = line['Mass Difference'].split(';')
             md = set([m.rsplit(':', maxsplit=1)[0] for m in md])
             # print(md)
